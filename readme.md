@@ -257,8 +257,8 @@ Qwen_MODEL_PATH = "D:\\data\\clangchain_ache\\qwen-2b\\Qwen2-VL-2B-Instruct"`
 #### 源码地址：[https://github.com/xiaoliangliang123/DocBrain](https://github.com/xiaoliangliang123/DocBrain)
 ## 我的微信号：
 
-> unix-blacker
+> unix-blacker，有问题可以一起讨论，原创不易，希望大家github上电量star~
 
-，有问题可以一起讨论，原创不易，希望大家github上电量star~
+
 
 
