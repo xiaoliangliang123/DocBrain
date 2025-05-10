@@ -1,4 +1,5 @@
 ## 简介
+> 详情可查看csdn https://blog.csdn.net/madness1010/article/details/147860829
 > 500行代码完成的基于flask+langchain+langgrah+chroma+(bge-base-zh-v1.5+Qwen2-VL-2B-Instruct）双大模型 的开源AI智能知识中枢系统‘DocBrain v1.0’，完全免费开源+支持在线和本地化双模式大模型+支持一键式私有化部署+提升工作与学习效率
 ## 有没有这样一款这开源的本地化轻量级系统？
 >我有《哈利波特》的7本电子书，但是没时间看却想知道哈利波特的所有故事线，然后我花了1分钟将这几本电子书上传到了系统里，
