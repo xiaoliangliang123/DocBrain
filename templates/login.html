@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocBrain 智能知识中枢</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: #0f172a; /* 科技感深蓝背景 */
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.05); /* 半透明容器 */
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1); /* 浅色边框 */
+            box-shadow: 0 4px 24px rgba(59, 130, 246, 0.1); /* 蓝色柔光阴影 */
+            width: 300px;
+            backdrop-filter: blur(8px); /* 毛玻璃效果 */
+        }
+
+        .system-title {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #3b82f6; /* 科技感亮蓝色 */
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 8px rgba(59, 130, 246, 0.2); /* 文字柔光 */
+        }
+
+        h2 {
+            text-align: center;
+            color: #e2e8f0; /* 浅灰色标题 */
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        .input-group {
+            margin-bottom: 1.2rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #94a3b8; /* 中性灰标签 */
+            font-size: 0.9rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #334155; /* 深灰边框 */
+            border-radius: 6px;
+            font-size: 1rem;
+            background-color: #1e293b; /* 输入框深色背景 */
+            color: #f8fafc; /* 白色文字 */
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #3b82f6; /* 聚焦时亮蓝边框 */
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); /* 蓝色发光效果 */
+        }
+
+        button {
+            width: 100%;
+            padding: 0.875rem;
+            background: linear-gradient(45deg, #2563eb, #3b82f6); /* 科技感渐变 */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2); /* 按钮阴影 */
+        }
+
+        button:hover {
+            background: linear-gradient(45deg, #1d4ed8, #2563eb); /* 悬停加深渐变 */
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3); /* 阴影增强 */
+        }
+
+        .error-msg {
+            color: #ef4444; /* 亮红色错误提示 */
+            text-align: center;
+            margin-top: 1rem;
+            min-height: 1.2rem;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="system-title">DocBrain 智能知识中枢</div> <!-- 新增系统标题 -->
+<!--        <h2>用户登录</h2>-->
+        <div class="error-msg" id="errorMsg"></div>
+
+        <div class="input-group">
+            <label for="username">用户名：</label>
+            <input type="text" id="username" placeholder="请输入用户名">
+        </div>
+
+        <div class="input-group">
+            <label for="password">密码：</label>
+            <input type="password" id="password" placeholder="请输入密码">
+        </div>
+
+        <button onclick="handleLogin()">登录</button>
+    </div>
+
+    <script>
+        async function handleLogin() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+
+            if (!username || !password) {
+                errorMsg.textContent = '用户名和密码不能为空';
+                return;
+            }
+
+            try {
+                const response = await fetch('/auth/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (data.code === 200) {
+                    window.location.href = data.redirect;
+                } else {
+                    errorMsg.textContent = data.msg;
+                }
+            } catch (error) {
+                errorMsg.textContent = '网络请求失败，请重试';
+            }
+        }
+    </script>
+</body>
+</html>

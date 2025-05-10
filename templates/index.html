@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocBrain 智能知识中枢</title>
+    <!-- 依赖库 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus/dist/index.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <style>
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            height: 100vh;
+            overflow: hidden; /* 防止整体滚动条 */
+        }
+
+        /* 顶部导航栏样式 */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+        }
+
+        .nav-logo {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1a202c;
+            cursor: pointer;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-menu {
+            position: relative;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .user-avatar:hover {
+            background-color: #e2e8f0;
+            transform: scale(1.05);
+        }
+
+        .user-avatar i {
+            font-size: 1.2rem;
+            color: #64748b;
+        }
+
+        /* 下拉菜单样式 */
+        .dropdown-menu {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 0.5rem 0;
+            display: none;
+            z-index: 1001;
+            animation: fadeIn 0.2s ease;
+            min-width: 160px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .dropdown-item {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.9rem;
+            color: #4a5568;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f5f7fa;
+        }
+
+        .dropdown-item i {
+            margin-right: 0.75rem;
+            width: 16px;
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 60px); /* 减去导航栏高度 */
+            margin-top: 60px; /* 调整内容区域位置，避免被导航栏遮挡 */
+        }
+
+        /* 左侧文档列表区域 */
+        .left-container {
+            width: 30%;
+            min-width: 300px;
+            background-color: #ffffff;
+            border-right: 1px solid #e9ecef;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            height: 100%; /* 占满父容器高度 */
+        }
+
+        .documents-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .documents-header h2 {
+            color: #1a202c;
+            font-size: 1.25rem;
+        }
+
+        .documents-list {
+            flex: 1; /* 占据剩余空间 */
+            overflow-y: auto; /* 仅在内容超出时显示滚动条 */
+            list-style: none;
+            max-height: calc(100% - 140px); /* 计算可用高度 */
+        }
+
+        .documents-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .documents-list li:hover {
+            background-color: #f1f3f5;
+            transform: translateX(4px);
+        }
+
+        .pdf-icon {
+            color: #e53e3e;
+            font-size: 1.2rem;
+        }
+
+        .filename {
+            flex: 1;
+            color: #2d3748;
+            font-size: 0.95rem;
+            word-break: break-all;
+        }
+
+        .preview-icon {
+            color: #3b82f6;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .preview-icon:hover {
+            color: #2563eb;
+        }
+
+        /* 上传区域样式 */
+        .upload-section {
+            border-top: 1px solid #e9ecef;
+            padding-top: 1.5rem;
+            margin-top: 1.5rem;
+            flex-shrink: 0; /* 防止被压缩 */
+        }
+
+        .upload-btn {
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.2s ease;
+            justify-content: center;
+        }
+
+        .upload-btn:hover {
+            background-color: #2563eb;
+        }
+
+        .upload-btn:disabled {
+            background-color: #90cdf4;
+            cursor: not-allowed;
+        }
+
+        /* 右侧问答区域 */
+        .right-container {
+            flex: 1;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            height: 100%; /* 占满父容器高度 */
+        }
+
+        .qa-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            flex-shrink: 0; /* 防止被压缩 */
+        }
+
+        .qa-header h1 {
+            color: #1a202c;
+            font-size: 2rem;
+        }
+
+        .answer-area {
+            flex: 1; /* 占据剩余空间 */
+            overflow-y: auto; /* 仅在内容超出时显示滚动条 */
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+        }
+
+        .question-section {
+            padding: 1.5rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            flex-shrink: 0; /* 防止被压缩 */
+        }
+
+        /* 提问输入框和按钮样式 */
+        .question-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .question-input {
+            flex: 1;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            color: #2d3748;
+            transition: border-color 0.2s ease;
+            resize: none; /* 禁止调整大小 */
+            min-height: 50px;
+        }
+
+        .question-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        .submit-btn {
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            white-space: nowrap;
+            min-width: 120px;
+        }
+
+        .submit-btn:hover {
+            background-color: #2563eb;
+        }
+
+        .submit-btn:disabled {
+            background-color: #90cdf4;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #718096;
+            font-size: 0.9rem;
+            margin: 1rem 0;
+        }
+
+        .spinner {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error-alert {
+            color: #c53030;
+            background-color: #fff5f5;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .fullscreen-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease;
+        }
+
+        .fullscreen-loading.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-content {
+            text-align: center;
+            background-color: white;
+            padding: 2rem 3rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading-content .spinner {
+            width: 2rem;
+            height: 2rem;
+            margin: 0 auto 1.5rem;
+        }
+
+        .loading-content p {
+            color: #1a202c;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .progress-bar {
+            width: 300px;
+            height: 6px;
+            background-color: #e9ecef;
+            border-radius: 3px;
+            margin: 0 auto 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #3b82f6;
+            border-radius: 3px;
+            transition: width 0.2s ease;
+        }
+
+        .progress-percentage {
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <!-- 顶部导航栏 -->
+        <div class="navbar">
+            <div class="nav-logo">DocBrain 智能知识中枢</div>
+            <div class="nav-right">
+                <div class="user-menu" ref="userMenu">
+                    <div class="user-avatar" @click="toggleDropdown" @mouseenter="handleAvatarEnter">
+                        <i class="fa fa-user-circle"></i>
+                    </div>
+                    <div class="dropdown-menu" ref="dropdownMenu" @mouseenter="handleMenuEnter" @mouseleave="handleMenuLeave">
+                        <div class="dropdown-item" @click="goToProfile">
+                            <i class="fa fa-user"></i>
+                            <span>个人信息</span>
+                        </div>
+                        <div class="dropdown-item" @click="logout">
+                            <i class="fa fa-sign-out"></i>
+                            <span>退出</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 全屏加载提示 -->
+        <div
+            class="fullscreen-loading"
+            :class="{ active: isUploading }"
+        >
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p>正在上传并处理文件...</p>
+                <div class="progress-bar">
+                    <div
+                        class="progress-fill"
+                        :style="{ width: progressPercentage + '%' }"
+                    ></div>
+                </div>
+                <p class="progress-percentage">
+                    [[ progressPercentage.toFixed(1) ]]%
+                </p>
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- 左侧文档列表 -->
+            <div class="left-container">
+                <div class="documents-header">
+                    <h2>我的文档</h2>
+                    <div v-if="isLoading" class="loading">
+                        <div class="spinner"></div>
+                        <span>加载中...</span>
+                    </div>
+                </div>
+
+                <ul class="documents-list">
+                    <li v-for="(doc, index) in documents" :key="index">
+                        <i class="fa fa-file-pdf-o pdf-icon"></i>
+                        <span class="filename">[[ doc ]]</span>
+                        <a :href="`/preview_pdf/${doc}`" target="_blank" class="preview-icon">
+                            <i class="fa fa-eye" title="预览文档"></i>
+                        </a>
+                    </li>
+                    <li v-if="errorMessage" class="error-alert">[[ errorMessage ]]</li>
+                    <li v-if="!documents.length && !errorMessage && !isLoading" class="filename" style="color: #718096; font-style: italic;">
+                        暂无上传的文档
+                    </li>
+                </ul>
+
+                <div class="upload-section">
+                    <input
+                        type="file"
+                        id="fileInput"
+                        ref="fileInput"
+                        accept=".pdf"
+                        style="display: none;"
+                        @change="handleFileSelect"
+                    >
+                    <button
+                        class="upload-btn"
+                        @click="$refs.fileInput.click()"
+                        :disabled="isUploading"
+                    >
+                        <i class="fa fa-upload"></i>
+                        <span v-if="!isUploading">选择并上传PDF</span>
+                        <span v-else>上传中...</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 右侧问答区域 -->
+            <div class="right-container">
+                <div class="qa-header">
+                    <h1> </h1>
+                </div>
+
+                <div class="answer-area">
+                    <div v-if="answer" class="answer-card">
+                        <p style="font-size: 1rem; line-height: 1.6; color: #1a202c;">
+                            <strong style="color: #3b82f6;">答案:</strong> [[ answer ]]
+                        </p>
+                        <div v-if="contextInfo.length" style="margin-top: 1.5rem;">
+                            <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1rem;">参考上下文:</p>
+                            <div v-for="(info, idx) in contextInfo" :key="idx" class="context-item" style="margin-bottom: 1rem;">
+                                <p style="font-size: 0.875rem; color: #2d3748; margin-bottom: 0.5rem;">
+                                    <strong>文档来源:</strong> [[ info.document_name ]]
+                                </p>
+                                <p style="font-size: 0.875rem; color: #4a5568; line-height: 1.5;">
+                                    [[ info.context ]]
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="qaError" class="error-alert">[[ qaError ]]</div>
+                </div>
+
+                <div class="question-section">
+                    <!-- 提问区域布局 -->
+                    <div class="question-container">
+                        <textarea
+                            class="question-input"
+                            ref="questionInput"
+                            placeholder="请输入你想从文档中查询的问题"
+                            @keyup.enter="submitQuestion"
+                        ></textarea>
+                        <button
+                            class="submit-btn"
+                            @click="submitQuestion"
+                            :disabled="isQaLoading"
+                        >
+                            <i class="fa fa-question-circle"></i>
+                            <span v-if="!isQaLoading">提交问题</span>
+                            <span v-else>检索中...</span>
+                        </button>
+                    </div>
+                    <div v-if="isQaLoading" class="loading">
+                        <div class="spinner"></div>
+                        <span>分析问题中...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    documents: [],          // 文档列表
+                    isLoading: true,        // 文档加载状态
+                    errorMessage: null,     // 文档加载错误
+                    isUploading: false,     // 文件上传状态
+                    progressPercentage: 0,  // 上传进度百分比
+                    answer: null,           // 问题答案
+                    contextInfo: [],        // 参考上下文
+                    qaError: null,          // 问答错误
+                    isQaLoading: false,     // 问答加载状态
+                    dropdownVisible: false, // 下拉菜单可见状态
+                    menuTimeout: null       // 菜单延迟隐藏定时器
+                };
+            },
+            delimiters: ['[[', ']]'],  // 避免与后端模板冲突
+            mounted() {
+                this.loadDocuments();
+                // 点击页面其他地方关闭下拉菜单
+                document.addEventListener('click', this.handleOutsideClick);
+
+                // 监听窗口大小变化，调整布局
+                window.addEventListener('resize', this.adjustLayout);
+                this.adjustLayout(); // 初始化时调整一次
+            },
+            beforeUnmount() {
+                // 移除事件监听器，防止内存泄漏
+                document.removeEventListener('click', this.handleOutsideClick);
+                window.removeEventListener('resize', this.adjustLayout);
+
+                // 清除定时器
+                if (this.menuTimeout) clearTimeout(this.menuTimeout);
+            },
+            methods: {
+                // 调整布局以适应窗口大小
+                adjustLayout() {
+                    // 这里可以添加更复杂的布局调整逻辑
+                    // 目前CSS已经通过flex和calc实现了自适应
+                },
+
+                // 加载文档列表
+                async loadDocuments() {
+                    this.isLoading = true;
+                    try {
+                        const res = await fetch('/get_uploaded_documents');
+                        const data = await res.json();
+                        if (data.error) throw new Error(data.error);
+                        this.documents = [...new Set(data.documents)]; // 去重
+                    } catch (err) {
+                        this.errorMessage = `加载文档失败: ${err.message}`;
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+
+                // 处理文件选择（自动触发上传）
+                handleFileSelect(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    if (!file.name.endsWith('.pdf')) {
+                        this.errorMessage = '仅支持上传PDF文件';
+                        return;
+                    }
+                    this.uploadFile(file);
+                },
+
+                // 上传文件（含进度监听）
+                uploadFile(file) {
+                    this.isUploading = true;
+                    this.errorMessage = null;
+                    this.progressPercentage = 0;
+
+                    const formData = new FormData();
+                    formData.append('file1', file);
+
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/upload_and_save');
+
+                    // 监听上传进度
+                    xhr.upload.addEventListener('progress', (event) => {
+                        if (event.lengthComputable) {
+                            const percent = (event.loaded / event.total) * 100;
+                            this.progressPercentage = Math.min(percent, 100); // 防止超过100%
+                        }
+                    });
+
+                    xhr.onload = () => {
+                        if (xhr.status === 200) {
+                            this.loadDocuments(); // 上传成功后刷新文档列表
+                            this.$refs.fileInput.value = ''; // 清空文件选择
+                        } else {
+                            const error = xhr.responseText || '服务器返回错误';
+                            this.errorMessage = `上传失败: ${error}`;
+                        }
+                        this.isUploading = false;
+                    };
+
+                    xhr.onerror = () => {
+                        this.errorMessage = '网络错误，请检查网络连接';
+                        this.isUploading = false;
+                    };
+
+                    xhr.ontimeout = () => {
+                        this.errorMessage = '上传超时，请重试';
+                        this.isUploading = false;
+                    };
+
+                    xhr.send(formData);
+                },
+
+                // 提交问题
+                async submitQuestion() {
+                    const question = this.$refs.questionInput.value.trim();
+                    if (!question) {
+                        this.qaError = '请输入问题';
+                        return;
+                    }
+
+                    this.isQaLoading = true;
+                    this.answer = null;
+                    this.qaError = null;
+                    try {
+                        const formData = new FormData();
+                        formData.append('question', question);
+                        const res = await fetch('/qa', { method: 'POST', body: formData });
+                        const data = await res.json();
+                        if (data.error) throw new Error(data.error);
+                        this.answer = data.answer || '未找到相关答案';
+                        this.contextInfo = data.context_info || [];
+                    } catch (err) {
+                        this.qaError = `查询失败: ${err.message}`;
+                    } finally {
+                        this.isQaLoading = false;
+                    }
+                },
+
+                // 切换下拉菜单显示状态
+                toggleDropdown(event) {
+                    event.stopPropagation(); // 防止事件冒泡
+                    this.dropdownVisible = !this.dropdownVisible;
+                    this.updateDropdownVisibility();
+                },
+
+                // 鼠标进入头像区域
+                handleAvatarEnter() {
+                    // 清除延迟隐藏定时器
+                    if (this.menuTimeout) {
+                        clearTimeout(this.menuTimeout);
+                        this.menuTimeout = null;
+                    }
+
+                    // 显示菜单
+                    this.dropdownVisible = true;
+                    this.updateDropdownVisibility();
+                },
+
+                // 鼠标进入菜单区域
+                handleMenuEnter() {
+                    // 清除延迟隐藏定时器
+                    if (this.menuTimeout) {
+                        clearTimeout(this.menuTimeout);
+                        this.menuTimeout = null;
+                    }
+                },
+
+                // 鼠标离开菜单区域
+                handleMenuLeave() {
+                    // 设置延迟隐藏定时器
+                    this.menuTimeout = setTimeout(() => {
+                        this.dropdownVisible = false;
+                        this.updateDropdownVisibility();
+                        this.menuTimeout = null;
+                    }, 300); // 300ms延迟，给用户足够时间移动到菜单
+                },
+
+                // 更新下拉菜单的显示状态
+                updateDropdownVisibility() {
+                    this.$nextTick(() => {
+                        if (this.dropdownVisible) {
+                            this.$refs.dropdownMenu.style.display = 'block';
+                        } else {
+                            this.$refs.dropdownMenu.style.display = 'none';
+                        }
+                    });
+                },
+
+                // 处理页面点击事件，关闭下拉菜单
+                handleOutsideClick(event) {
+                    const userMenu = this.$refs.userMenu;
+                    const dropdownMenu = this.$refs.dropdownMenu;
+
+                    if (userMenu && dropdownMenu) {
+                        if (!userMenu.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                            this.dropdownVisible = false;
+                            this.updateDropdownVisibility();
+                        }
+                    }
+                },
+
+                // 跳转到个人信息页面
+                goToProfile() {
+                    this.dropdownVisible = false;
+                    this.updateDropdownVisibility();
+                    window.location.href = '/profile'; // 跳转到个人信息页面
+                },
+
+                // 退出登录方法
+                logout() {
+                    this.dropdownVisible = false;
+                    this.updateDropdownVisibility();
+                    if (confirm('确定要退出登录吗？')) {
+                        window.location.href = '/login'; // 跳转到登录页面
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>
